@@ -5,6 +5,13 @@ import NoteCard from "./note-card";
 import { useToast } from "@/hooks/use-toast";
 import { AddNoteModal } from "./AddNoteModal";
 import useGetNotes from "@/hooks/useGetNotes";
+import AuthModal from "./auth/AuthModal";
+import useCurrentUser from "./auth/hooks/useCurrentUser";
+import { Skeleton } from "./ui/skeleton";
+import { Button } from "./ui/button";
+import { LogOut } from "lucide-react";
+import useLogout from "./auth/hooks/useLogout";
+
 export type Note = {
   id: string;
   title: string;
@@ -16,6 +23,9 @@ export type Note = {
 };
 
 export default function NoteApp() {
+  const { currentUser, status: currentUserStatus } = useCurrentUser();
+  const { logoutPending, handleLogout } = useLogout();
+  console.log(currentUser);
   const { notes, status } = useGetNotes();
   console.log(notes);
   const { toast } = useToast();
@@ -55,7 +65,7 @@ export default function NoteApp() {
       });
     }
   };
-
+  console.log(currentUserStatus);
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <header className="mb-8">
@@ -68,9 +78,14 @@ export default function NoteApp() {
           Create, manage, and share your notes with ease
         </p>
       </header>
-
       <div className="flex justify-center mb-8">
-        <AddNoteModal />
+        {currentUserStatus === "pending" && !currentUser && (
+          <Skeleton className="w-32 h-8 bg-gray-300" />
+        )}
+        {currentUserStatus !== "success" &&
+          currentUserStatus !== "pending" &&
+          !currentUser && <AuthModal />}
+        {currentUser && <AddNoteModal />}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -126,6 +141,19 @@ export default function NoteApp() {
           </motion.div>
         )}
       </div>
+      {currentUser && (
+        <div className="flex justify-end mt-8">
+          <Button
+            variant={"outline"}
+            disabled={logoutPending}
+            onClick={handleLogout}
+          >
+            {" "}
+            <LogOut />
+            {logoutPending ? "Logging out..." : "Logout"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
